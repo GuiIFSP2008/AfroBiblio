@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login | AfroBiblio</title>
+    <link rel="stylesheet" href="login.css">
+    <link rel="icon" href="../imagens/iconepag.jpg" type="image/x-icon">
+</head>
+
+<body>
+    <div class="login-container">
+        <div class="login-box">
+            <div class="logo">
+                <img src="../imagens/iconepag.jpg" alt="Ícone AfroBiblio" class="logo-icon">
+                <h1>AfroBiblio</h1>
+            </div>
+
+            <h2>Bem-vindo(a) de volta</h2>
+            <p class="descricao">Acesse sua conta para continuar explorando a literatura africana</p>
+
+            <form action="#" method="POST">
+                <div class="input-group">
+                    <label for="email">E-mail</label>
+                    <input type="email" id="email" name="email" placeholder="exemplo@email.com" required>
+                </div>
+
+                <div class="input-group">
+                    <label for="senha">Senha</label>
+                    <input type="password" id="senha" name="senha" placeholder="••••••••" required>
+                </div>
+
+                <button type="submit" class="botao">Entrar</button>
+
+                <p class="cadastro-texto">
+                    Ainda não tem uma conta? <a href="/cadastro">Cadastre-se</a>
+                </p>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        document.querySelector("form").addEventListener("submit", async (e) => {
+            e.preventDefault();
+
+            const email = document.getElementById("email").value;
+            const senha = document.getElementById("senha").value;
+
+            const resposta = await fetch("/login", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email, senha })
+            });
+
+            const dados = await resposta.json();
+
+            if (resposta.ok) {
+                localStorage.setItem("usuarioLogado", JSON.stringify(dados.usuario));
+                window.location.href = "/";
+            } else {
+                alert(dados.erro || "Erro ao fazer login.");
+            }
+        });
+    </script>
+
+
+</body>
+
+</html>

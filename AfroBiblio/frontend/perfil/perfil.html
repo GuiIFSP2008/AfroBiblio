@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Meu Perfil | AfroBiblio</title>
+  <link rel="stylesheet" href="perfil.css" />
+  <link rel="icon" href="../imagens/iconepag.jpg" type="image/x-icon" />
+</head>
+
+<body>
+
+  <!-- HEADER -->
+  <header>
+    <div class="logo">
+      <img src="../imagens/iconepag.jpg" alt="Ícone AfroBiblio" class="logo-icon" />
+      <h1>AfroBiblio</h1>
+    </div>
+
+    <nav>
+      <ul>
+        <li><a href="/">Início</a></li>
+        <li><a href="/titulos">Títulos</a></li>
+        <li><a href="/autores">Autores</a></li>
+        <li><a href="/adicionar" id="cadastro-link">Adicionar Título/Autor</a></li>
+        <li><a href="/buscar">Buscar</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <!-- PERFIL -->
+  <main>
+    <div class="perfil-card">
+      <img src="../imagens/profile.png" alt="Foto de perfil" class="perfil-icon" />
+      <button type="button" id="excluir-perfil" class="botao-excluir">Excluir Perfil</button>
+
+      <h2>Meu Perfil</h2>
+
+      <form id="form-perfil" class="perfil-form">
+        <div class="input-group">
+          <label for="nome">Nome</label>
+          <input type="text" id="nome" name="nome" />
+        </div>
+
+        <div class="input-group">
+          <label for="pais">País</label>
+          <input type="text" id="pais" name="pais" />
+        </div>
+
+        <div class="input-group">
+          <label for="senha">Senha</label>
+          <input type="password" id="senha" name="senha" placeholder="Digite uma nova senha (opcional)" />
+        </div>
+
+        <p id="mensagem-sucesso" class="mensagem-sucesso" style="display: none;">
+          ✅ Alterações salvas com sucesso!
+        </p>
+
+        <div class="botoes-container">
+          <button type="submit" class="botao">Salvar Alterações</button>
+          <button type="button" class="botao-vermelho" id="logout-btn">Sair da conta</button>
+        </div>
+      </form>
+    </div>
+  </main>
+
+  <!-- LISTA DE TÍTULOS -->
+  <section class="secao-lista">
+    <h2 class="titulo-secao">Meus Títulos Cadastrados</h2>
+    <div id="lista-titulos-usuario" class="grade-cards"></div>
+  </section>
+
+  <!-- LISTA DE AUTORES -->
+  <section class="secao-lista">
+    <h2 class="titulo-secao">Meus Autores Cadastrados</h2>
+    <div id="lista-autores-usuario" class="grade-cards"></div>
+  </section>
+
+  <!-- MODAL EDITAR TÍTULO -->
+  <div id="modal-editar-titulo" class="modal">
+    <form id="form-editar-titulo" class="modal-box">
+      <h3>Editar Título</h3>
+
+      <input type="hidden" id="edit-titulo-id">
+
+      <label>Título:</label>
+      <input type="text" id="edit-titulo">
+
+      <label>Autor:</label>
+      <select id="edit-autor-id"></select>
+
+      <label>País:</label>
+      <select id="edit-pais-id"></select>
+
+      <label>Ano de publicação:</label>
+      <input type="number" id="edit-ano">
+
+      <label>Descrição:</label>
+      <textarea id="edit-descricao"></textarea>
+
+      <button type="submit">Salvar</button>
+      <button type="button"
+        onclick="document.getElementById('modal-editar-titulo').style.display='none'">Cancelar</button>
+    </form>
+  </div>
+
+  <!-- MODAL EDITAR AUTOR -->
+  <div id="modal-editar-autor" class="modal">
+    <form id="form-editar-autor" class="modal-box">
+      <h3>Editar Autor</h3>
+
+      <input type="hidden" id="edit-autor-id-hidden">
+
+      <label>Nome:</label>
+      <input type="text" id="edit-autor-nome">
+
+      <label>País:</label>
+      <select id="edit-autor-pais"></select>
+
+      <label>Biografia:</label>
+      <textarea id="edit-autor-bio"></textarea>
+
+      <button type="submit">Salvar</button>
+      <button type="button"
+        onclick="document.getElementById('modal-editar-autor').style.display='none'">Cancelar</button>
+    </form>
+  </div>
+
+  <footer>
+    <p>Desenvolvido por Guilherme Venancio de Souza — IFSP Campinas</p>
+    <p>Licença: Creative Commons CC BY-SA 4.0</p>
+  </footer>
+
+  <script>
+    // ---------- helpers ----------
+    const qs = sel => document.querySelector(sel);
+    const qsa = sel => Array.from(document.querySelectorAll(sel));
+
+    const usuarioLogado = JSON.parse(localStorage.getItem("usuarioLogado"));
+    if (!usuarioLogado) { alert("Você precisa estar logado."); window.location.href = "/login"; }
+
+    // ---------- preenche inputs perfil ----------
+    window.addEventListener("load", () => {
+      qs("#nome").value = usuarioLogado.nome || "";
+      qs("#pais").value = usuarioLogado.pais || "";
+      inicializarPagina();
+    });
+
+    // ---------- inicialização (carrega selects, listas) ----------
+    async function inicializarPagina() {
+      await Promise.all([carregarSelectsGlobais(), carregarTitulosUsuario(), carregarAutoresUsuario()]);
+    }
+
+    // ---------- carrega autores e países para os selects dos modais ----------
+    async function carregarSelectsGlobais() {
+      try {
+        const [respAutores, respPaises] = await Promise.all([
+          fetch("/api/autores"),
+          fetch("/api/paises")
+        ]);
+        const [autores, paises] = await Promise.all([respAutores.json(), respPaises.json()]);
+
+        // popula todos os selects que precisam de autores
+        const selectsAutor = qsa("#edit-autor-id");
+        selectsAutor.forEach(s => {
+          s.innerHTML = `<option value="">Selecione autor</option>` + autores.map(a => `<option value="${a.id}">${escapeHtml(a.nome)}</option>`).join("");
+        });
+
+        // popula selects de paises (vários ids nos modais)
+        const selectsPais = qsa("#edit-pais-id, #edit-autor-pais");
+        selectsPais.forEach(s => {
+          s.innerHTML = `<option value="">Selecione país</option>` + paises.map(p => `<option value="${p.id}">${escapeHtml(p.nome)}</option>`).join("");
+        });
+
+      } catch (err) {
+        console.error("Erro ao carregar autores/paises:", err);
+      }
+    }
+
+    // escape simples para segurança visual
+    function escapeHtml(str = "") {
+      return String(str).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
+    }
+
+    // ---------- CARREGAR LISTAS (titulo/autor do usuário) ----------
+    async function carregarTitulosUsuario() {
+      try {
+        const resp = await fetch(`/api/titulos/usuario/${usuarioLogado.id}`);
+        const titulos = await resp.json();
+        const container = qs("#lista-titulos-usuario");
+        container.innerHTML = "";
+        if (!titulos.length) { container.innerHTML = "<p>Você ainda não cadastrou títulos.</p>"; return; }
+
+        titulos.forEach(t => {
+          const card = document.createElement("div");
+          card.className = "card-item";
+          card.innerHTML = `
+          <h4>${escapeHtml(t.titulo)}</h4>
+          <p><strong>Autor:</strong> ${escapeHtml(t.nome_autor || "—")}</p>
+          <p><strong>Ano:</strong> ${escapeHtml(t.ano_publicacao || "—")}</p>
+          <div class="card-botoes">
+            <button class="botao-editar" data-id="${t.id}" data-tipo="titulo">Editar</button>
+            <button class="botao-excluir-card" onclick="excluirTitulo(${t.id})">Excluir</button>
+          </div>
+        `;
+          container.appendChild(card);
+        });
+      } catch (err) {
+        console.error("Erro ao carregar títulos:", err);
+      }
+    }
+
+    async function carregarAutoresUsuario() {
+      try {
+        const resp = await fetch(`/api/autores/usuario/${usuarioLogado.id}`);
+        const autores = await resp.json();
+        const container = qs("#lista-autores-usuario");
+        container.innerHTML = "";
+        if (!autores.length) { container.innerHTML = "<p>Você ainda não cadastrou autores.</p>"; return; }
+
+        autores.forEach(a => {
+          const card = document.createElement("div");
+          card.className = "card-item";
+          card.innerHTML = `
+          <h4>${escapeHtml(a.nome)}</h4>
+          <p><strong>País:</strong> ${escapeHtml(a.pais || "—")}</p>
+          <div class="card-botoes">
+            <button class="botao-editar" data-id="${a.id}" data-tipo="autor">Editar</button>
+            <button class="botao-excluir-card" onclick="excluirAutor(${a.id})">Excluir</button>
+          </div>
+        `;
+          container.appendChild(card);
+        });
+      } catch (err) {
+        console.error("Erro ao carregar autores:", err);
+      }
+    }
+
+    // ---------- DELEGAÇÃO DE CLIQUE PARA EDITAR (único listener) ----------
+    document.addEventListener("click", async (ev) => {
+      const btn = ev.target.closest(".botao-editar");
+      if (!btn) return;
+
+      const id = btn.dataset.id;
+      const tipo = btn.dataset.tipo;
+
+      if (tipo === "titulo") await abrirModalEditarTitulo(id);
+      else if (tipo === "autor") await abrirModalEditarAutor(id);
+    });
+
+    // ---------- abrir modal editar título (carrega dados e mostra modal) ----------
+    async function abrirModalEditarTitulo(id) {
+      try {
+        // garante selects globais carregados (caso não tenha sido carregado antes)
+        await carregarSelectsGlobais();
+
+        const resp = await fetch(`/api/titulos/${id}`);
+        if (!resp.ok) { alert("Erro ao buscar título."); return; }
+        const dados = await resp.json();
+
+        qs("#edit-titulo-id").value = id;
+        qs("#edit-titulo").value = dados.titulo || "";
+        qs("#edit-autor-id").value = dados.autor_id || "";
+        qs("#edit-pais-id").value = dados.pais_id || "";
+        qs("#edit-ano").value = dados.ano_publicacao || "";
+        qs("#edit-descricao").value = dados.descricao || "";
+
+        qs("#modal-editar-titulo").style.display = "flex";
+      } catch (err) {
+        console.error("Erro ao abrir modal título:", err);
+        alert("Erro ao abrir modal de edição de título.");
+      }
+    }
+
+    // ---------- abrir modal editar autor (carrega dados e mostra modal) ----------
+    async function abrirModalEditarAutor(id) {
+      try {
+        await carregarSelectsGlobais();
+
+        const resp = await fetch(`/api/autores/${id}`);
+        if (!resp.ok) { alert("Erro ao buscar autor."); return; }
+        const dados = await resp.json();
+
+        qs("#edit-autor-id-hidden").value = id;
+        qs("#edit-autor-nome").value = dados.nome || "";
+        qs("#edit-autor-pais").value = dados.pais_id || "";
+        qs("#edit-autor-bio").value = dados.biografia || "";
+
+        qs("#modal-editar-autor").style.display = "flex";
+      } catch (err) {
+        console.error("Erro ao abrir modal autor:", err);
+        alert("Erro ao abrir modal de edição de autor.");
+      }
+    }
+
+    // ---------- SUBMITS dos forms dos modais ----------
+    qs("#form-editar-titulo").addEventListener("submit", async e => {
+      e.preventDefault();
+      const id = qs("#edit-titulo-id").value;
+      const dados = {
+        titulo: qs("#edit-titulo").value.trim(),
+        autor_id: qs("#edit-autor-id").value || null,
+        pais_id: qs("#edit-pais-id").value || null,
+        ano_publicacao: qs("#edit-ano").value || null,
+        descricao: qs("#edit-descricao").value.trim() || null
+      };
+      try {
+        const resp = await fetch(`/api/titulos/${id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(dados)
+        });
+        const json = await resp.json();
+        if (!resp.ok) return alert(json.erro || "Erro ao atualizar título.");
+        alert(json.mensagem || "Título atualizado!");
+        qs("#modal-editar-titulo").style.display = "none";
+        carregarTitulosUsuario();
+      } catch (err) {
+        console.error("Erro ao salvar título:", err);
+        alert("Erro na atualização do título.");
+      }
+    });
+
+    qs("#form-editar-autor").addEventListener("submit", async e => {
+      e.preventDefault();
+      const id = qs("#edit-autor-id-hidden").value;
+      const dados = {
+        nome: qs("#edit-autor-nome").value.trim(),
+        pais_id: qs("#edit-autor-pais").value || null,
+        biografia: qs("#edit-autor-bio").value.trim() || null
+      };
+      try {
+        const resp = await fetch(`/api/autores/${id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(dados)
+        });
+        const json = await resp.json();
+        if (!resp.ok) return alert(json.erro || "Erro ao atualizar autor.");
+        alert(json.mensagem || "Autor atualizado!");
+        qs("#modal-editar-autor").style.display = "none";
+        carregarAutoresUsuario();
+      } catch (err) {
+        console.error("Erro ao salvar autor:", err);
+        alert("Erro na atualização do autor.");
+      }
+    });
+
+    // ---------- funções de exclusão (mantive suas) ----------
+    async function excluirTitulo(id) {
+      if (!confirm("Deseja realmente excluir este título?")) return;
+      try {
+        const resp = await fetch(`/api/titulos/${id}`, { method: "DELETE" });
+        const json = await resp.json();
+        if (!resp.ok) return alert(json.erro || "Erro ao excluir título.");
+        alert("Título excluído com sucesso!");
+        carregarTitulosUsuario();
+      } catch (err) {
+        console.error("Erro excluir título:", err);
+        alert("Erro ao conectar ao servidor.");
+      }
+    }
+    window.excluirTitulo = excluirTitulo; // expõe para onclick inline
+
+    async function excluirAutor(id) {
+      if (!confirm("Excluir este autor vai excluir também seus títulos. Confirmar?")) return;
+      try {
+        const resp = await fetch(`/api/autores/${id}`, { method: "DELETE" });
+        const json = await resp.json();
+        if (!resp.ok) return alert(json.erro || "Erro ao excluir autor.");
+        alert("Autor excluído com sucesso!");
+        carregarAutoresUsuario();
+      } catch (err) {
+        console.error("Erro excluir autor:", err);
+        alert("Erro ao conectar ao servidor.");
+      }
+    }
+    window.excluirAutor = excluirAutor; // expõe para onclick inline
+
+    // ---------- botão excluir perfil (mantive) ----------
+    qs("#excluir-perfil").addEventListener("click", async () => {
+      if (!confirm("⚠️ Tem certeza que deseja excluir seu perfil?")) return;
+      try {
+        const resp = await fetch(`/perfil/${usuarioLogado.id}`, { method: "DELETE" });
+        const json = await resp.json();
+        if (!resp.ok) return alert(json.erro || "Erro ao excluir perfil.");
+        alert("Perfil excluído com sucesso!");
+        localStorage.removeItem("usuarioLogado");
+        window.location.href = "/";
+      } catch (err) {
+        console.error("Erro ao excluir perfil:", err);
+        alert("Erro ao conectar ao servidor.");
+      }
+    });
+
+    qs("#logout-btn").addEventListener("click", () => {
+      localStorage.removeItem("usuarioLogado");
+      alert("Você saiu da sua conta.");
+      window.location.href = "/";
+    });
+  </script>
+
+</body>
+
+</html>

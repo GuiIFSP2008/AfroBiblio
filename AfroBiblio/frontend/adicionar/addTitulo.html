@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastrar Título | AfroBiblio</title>
+    <link rel="stylesheet" href="addTitulo.css">
+    <link rel="icon" href="../imagens/iconepag.jpg" type="image/x-icon">
+</head>
+
+<body>
+
+    <header>
+        <div class="logo">
+            <img src="../imagens/iconepag.jpg" alt="Ícone AfroBiblio" class="logo-icon">
+            <h1>AfroBiblio</h1>
+        </div>
+
+        <nav>
+            <ul>
+                <li><a href="/adicionar" id="cadastro-link">Voltar</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <section class="cadastro-container">
+            <div class="cadastro-box" style="max-width: 600px;">
+
+                <h2 style="margin-bottom: 10px;">Cadastrar Novo Título</h2>
+                <p class="descricao">Preencha as informações abaixo para adicionar uma nova obra ao acervo.</p>
+
+                <form id="form-cadastro-titulo">
+
+                    <div class="input-group">
+                        <label for="titulo">Título da obra</label>
+                        <input type="text" id="titulo" name="titulo" placeholder="Nome do livro" required>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="autor">Autor</label>
+                        <select id="autor" name="autor" required>
+                            <option value="">Selecione o autor</option>
+                        </select>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="pais">País de origem</label>
+                        <select id="pais" name="pais" required>
+                            <option value="">Selecione o país</option>
+                        </select>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="ano_publicacao">Ano de publicação</label>
+                        <input type="number" id="ano_publicacao" name="ano_publicacao" placeholder="Ex.: 1984" min="0">
+                    </div>
+
+                    <div class="input-group">
+                        <label for="descricao">Descrição / Sinopse</label>
+                        <textarea id="descricao" name="descricao" rows="4"
+                            placeholder="Escreva a sinopse ou descrição da obra..."
+                            style="width: 100%; padding: 10px; border: 2px solid #d6b65d; border-radius: 8px; background: #fff4d2;"></textarea>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="idiomas">Idiomas disponíveis</label>
+                        <select id="idiomas" name="idiomas" multiple size="5"
+                            style="padding: 10px; border: 2px solid #d6b65d; border-radius: 8px; background-color: #fff4d2;">
+                        </select>
+                        <small style="color:#3b1f0f">* Segure CTRL para selecionar vários idiomas</small>
+                    </div>
+
+                    <button type="submit" class="botao">Cadastrar Título</button>
+
+                </form>
+
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>Desenvolvido por Guilherme Venancio de Souza — IFSP Campinas</p>
+        <p>Licença: Creative Commons CC BY-SA 4.0</p>
+    </footer>
+
+    <script>
+
+        const usuarioLogado = JSON.parse(localStorage.getItem("usuarioLogado"));
+        if (!usuarioLogado) {
+            alert("Você precisa estar logado!");
+            window.location.href = "/login";
+        }
+
+
+        // Função para carregar autores, países e idiomas
+        async function carregarDados() {
+            try {
+
+                // ==========================
+                // BUSCA TODOS OS DADOS
+                // ==========================
+                const [autores, paises, idiomas] = await Promise.all([
+                    fetch("/api/autores").then(r => r.json()),
+                    fetch("/api/paises").then(r => r.json()),
+                    fetch("/api/idiomas").then(r => r.json())
+                ]);
+
+                // ==========================
+                // POPULA AUTORES
+                // ==========================
+                const selectAutor = document.getElementById("autor");
+                autores.forEach(a =>
+                    selectAutor.innerHTML += `<option value="${a.id}">${a.nome}</option>`
+                );
+
+                if (autores.length === 0) {
+                    selectAutor.innerHTML = `<option value="">Nenhum autor cadastrado</option>`;
+                }
+
+                // ==========================
+                // POPULA PAÍSES
+                // ==========================
+                const selectPais = document.getElementById("pais");
+                paises.forEach(p =>
+                    selectPais.innerHTML += `<option value="${p.id}">${p.nome}</option>`
+                );
+
+                if (paises.length === 0) {
+                    selectPais.innerHTML = `<option value="">Nenhum país cadastrado</option>`;
+                }
+
+                // ==========================
+                // POPULA IDIOMAS
+                // ==========================
+                const selectIdiomas = document.getElementById("idiomas");
+                idiomas.forEach(i =>
+                    selectIdiomas.innerHTML += `<option value="${i.id}">${i.nome}</option>`
+                );
+
+                if (idiomas.length === 0) {
+                    selectIdiomas.innerHTML = `<option value="">Nenhum idioma cadastrado</option>`;
+                }
+
+            } catch (erro) {
+                console.error("Erro ao carregar opções do backend:", erro);
+                alert("Erro ao carregar autores, países ou idiomas. Verifique se o servidor está rodando.");
+            }
+        }
+
+        // Executa carregamento assim que a página abre
+        carregarDados();
+
+
+        // ========================================================
+        // ENVIO DO FORMULÁRIO
+        // ========================================================
+        document.getElementById("form-cadastro-titulo").addEventListener("submit", async (e) => {
+            e.preventDefault();
+
+            const idiomasSelecionados = Array.from(document.getElementById("idiomas").selectedOptions)
+                .map(o => o.value);
+
+            const dados = {
+                titulo: titulo.value.trim(),
+                autor_id: autor.value,
+                pais_id: pais.value,
+                ano_publicacao: ano_publicacao.value,
+                descricao: descricao.value.trim(),
+                idiomas: idiomasSelecionados,
+                usuario_id: usuarioLogado.id
+            };
+
+
+            // Validação simples antes de enviar
+            if (!dados.titulo || !dados.autor_id || !dados.pais_id) {
+                alert("Preencha pelo menos o título, autor e país.");
+                return;
+            }
+
+            try {
+                const resposta = await fetch("/adicionar/titulo", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(dados)
+                });
+
+
+                const result = await resposta.json();
+
+                if (!resposta.ok) {
+                    alert(result.error || "Erro ao cadastrar título.");
+                    return;
+                }
+
+                alert("Título cadastrado com sucesso!");
+                window.location.href = "/titulos";
+
+            } catch (erro) {
+                console.error("Erro ao enviar formulário:", erro);
+                alert("Erro de conexão com o servidor.");
+            }
+        });
+
+    </script>
+
+
+</body>
+
+</html>

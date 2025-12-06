@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AfroBiblio - Adicionar</title>
+  <link rel="stylesheet" href="adicionar.css" />
+  <link rel="icon" href="../imagens/iconepag.jpg" type="image/x-icon" />
+</head>
+
+<body>
+
+  <header>
+    <div class="logo">
+      <img src="../imagens/iconepag.jpg" alt="Ícone AfroBiblio" class="logo-icon" />
+      <h1>AfroBiblio</h1>
+    </div>
+
+    <nav>
+      <ul>
+        <li><a href="/">Início</a></li>
+        <li><a href="/titulos">Títulos</a></li>
+        <li><a href="/autores">Autores</a></li>
+        <li><a href="/buscar">Buscar</a></li>
+        <li><a href="/perfil" class="perfil-link">Perfil<img src="../imagens/profile.png" alt="Perfil"
+              class="icon-perfil"></a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main>
+    <h2 class="titulo-pagina">O que deseja cadastrar?</h2>
+
+    <div class="grid-opcoes">
+
+      <button class="opcao" id="btn-titulo">
+        <img src="../imagens/stacked-books-reflect-knowledge-and-wisdom_11307334.png!sw800" alt="Ícone de Livro" />
+        <span>Cadastrar Título</span>
+      </button>
+
+      <button class="opcao" id="btn-autor">
+        <img src="../imagens/autorcad.img" alt="Ícone de Autor" />
+        <span>Cadastrar Autor</span>
+      </button>
+
+    </div>
+  </main>
+
+  <footer>
+    <p>Desenvolvido por Guilherme Venancio de Souza — IFSP Campinas</p>
+    <p>Licença: Creative Commons CC BY-SA 4.0</p>
+  </footer>
+
+  <script>
+    document.getElementById("btn-titulo").addEventListener("click", () => {
+      window.location.href = "/adicionar/titulo";
+    });
+
+    document.getElementById("btn-autor").addEventListener("click", () => {
+      window.location.href = "/adicionar/autor";
+    });
+  </script>
+
+</body>
+
+</html>

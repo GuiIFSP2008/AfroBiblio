@@ -1,0 +1,183 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Poppins', sans-serif;
+    background-color: #dcb172;
+    color: #222;
+    padding-top: 70px;
+}
+
+header {
+    position: fixed;
+    top: 0;
+    width: 100%;
+    height: 70px;
+    background-color: #3b1f0f;
+    color: #fdd835;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 40px;
+    z-index: 1000;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.logo-icon {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    border: 2px solid #fdd835;
+    object-fit: cover;
+    transition: transform 0.3s;
+}
+
+.logo-icon:hover {
+    transform: scale(1.05);
+}
+
+nav ul {
+    display: flex;
+    list-style: none;
+    gap: 20px;
+}
+
+nav a {
+    text-decoration: none;
+    color: #fdd835;
+    font-weight: bold;
+    transition: color 0.3s;
+}
+
+nav a:hover {
+    color: #ffeb3b;
+    text-decoration: underline;
+}
+
+nav img {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 1.5px solid #fdd835;
+}
+
+.principal {
+    display: flex;
+    justify-content: center;
+    padding: 60px 40px;
+    background-color: #e3ce8c;
+}
+
+.principal-texto {
+    max-width: 800px;
+    color: #3b1f0f;
+    line-height: 1.7;
+}
+
+.principal-texto h2 {
+    font-family: 'Georgia', serif;
+    font-size: 2.2em;
+    margin-bottom: 20px;
+}
+
+.principal-texto p {
+    color: #4b2b12;
+    margin-bottom: 30px;
+}
+
+.botao {
+    display: inline-block;
+    background-color: #3b1f0f;
+    color: #fdd835;
+    padding: 12px 25px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.botao:hover {
+    background-color: #5a3018;
+}
+
+footer {
+    background-color: #3b1f0f;
+    color: #fdd835;
+    text-align: center;
+    padding: 15px;
+}
+
+.grade-home {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 20px;
+}
+
+.card-home {
+    background: #e0ca73;
+    border: 2px solid #9c7d2e;
+    padding: 20px;
+    border-radius: 12px;
+    transition: transform 0.2s;
+}
+
+.card-home:hover {
+    transform: scale(1.03);
+}
+
+.card-home h4 {
+    margin-bottom: 10px;
+    color: #3b1f0f;
+}
+
+.card-home p {
+    margin-bottom: 6px;
+    color: #4b2b12;
+}
+
+.botao-amarelo {
+    background-color: #f4c430;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-weight: bold;
+    border: none;
+    cursor: pointer;
+}
+
+.botao-amarelo:hover {
+    background-color: #e5b722;
+}
+
+.perfil-link {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.perfil-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+}
+
+@media (max-width: 768px) {
+    header {
+        padding: 10px 20px;
+    }
+
+    .principal {
+        padding: 40px 20px;
+    }
+
+    nav ul {
+        gap: 15px;
+    }
+}

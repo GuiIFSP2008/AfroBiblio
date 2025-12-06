@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AfroBiblio – Autores</title>
+    <link rel="stylesheet" href="autores.css" />
+    <link rel="icon" href="../imagens/iconepag.jpg" type="image/x-icon" />
+</head>
+
+<body>
+    <header>
+        <div class="logo">
+            <img src="../imagens/iconepag.jpg" alt="Ícone AfroBiblio" class="logo-icon" />
+            <h1>AfroBiblio</h1>
+        </div>
+
+        <nav>
+            <ul>
+                <li><a href="/">Início</a></li>
+                <li><a href="/titulos">Títulos</a></li>
+                <li><a href="/adicionar" id="cadastro-link">Adicionar Título/Autor</a></li>
+                <li><a href="/buscar">Buscar</a></li>
+                <li id="auth-area"></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <section class="principal">
+            <div class="principal-texto">
+                <h2>Conheça os Autores da Literatura Africana</h2>
+                <p>
+                    Explore os escritores e escritoras que marcaram a literatura africana e afro-diaspórica.
+                    Aqui, cada nome conta uma história, cada voz ecoa uma herança de resistência, arte e ancestralidade.
+                </p>
+                <a href="/adicionar/autor" id="btn-cadastrar-autor" class="botao">Cadastrar Novo Autor +</a>
+            </div>
+        </section>
+
+        <section class="lista-autores" style="padding: 40px;">
+            <h2 style="color: #3b1f0f; margin-bottom: 20px;">Autores Cadastrados</h2>
+            <div id="container-autores"
+                style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px;">
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>Desenvolvido por Guilherme Venancio de Souza — IFSP Campinas</p>
+        <p>Licença: Creative Commons CC BY-SA 4.0</p>
+    </footer>
+
+    <script>
+        const usuarioLogado = localStorage.getItem("usuarioLogado");
+        const authArea = document.getElementById("auth-area");
+        const cadastroLink = document.getElementById("cadastro-link");
+
+        // --- Controle do header ---
+        if (usuarioLogado) {
+            authArea.innerHTML = `
+      <a href="/perfil" class="perfil-link">
+        Perfil
+        <img src="../imagens/profile.png" alt="Perfil" class="perfil-icon">
+      </a>
+    `;
+        } else {
+            authArea.innerHTML = `
+      <button id="entrar-btn" class="botao-amarelo">Entrar</button>
+    `;
+            document.getElementById("entrar-btn").addEventListener("click", () => {
+                window.location.href = "/login";
+            });
+        }
+
+        // --- Função de proteção de acesso ---
+        function protegerAcesso(event) {
+            if (!usuarioLogado) {
+                event.preventDefault();
+                alert("Você precisa estar logado para cadastrar títulos ou autores.");
+                window.location.href = "/login";
+            }
+        }
+
+        // --- Aplica a proteção no link do cabeçalho ---
+        cadastroLink.addEventListener("click", protegerAcesso);
+
+        // --- E também nos botões específicos ---
+        const btnTitulo = document.getElementById("btn-cadastrar-titulo");
+        const btnAutor = document.getElementById("btn-cadastrar-autor");
+
+        if (btnTitulo) btnTitulo.addEventListener("click", protegerAcesso);
+        if (btnAutor) btnAutor.addEventListener("click", protegerAcesso);
+
+
+
+        async function carregarAutores() {
+            try {
+                const resposta = await fetch("/api/autores");
+                const autores = await resposta.json();
+
+                const container = document.getElementById("container-autores");
+                container.innerHTML = "";
+
+                if (autores.length === 0) {
+                    container.innerHTML = "<p>Nenhum autor cadastrado ainda.</p>";
+                    return;
+                }
+
+                autores.forEach(a => {
+                    const card = document.createElement("div");
+                    card.classList.add("card-autor");
+                    card.innerHTML = `
+        <h4>${a.nome}</h4>
+        <p><strong>País:</strong> ${a.pais || "—"}</p>
+        <p><strong>Biografia:</strong> ${a.biografia || "—"}</p>
+    `;
+                    container.appendChild(card);
+                });
+
+            } catch (erro) {
+                console.error("Erro ao carregar autores:", erro);
+            }
+        }
+
+        carregarAutores();
+
+
+    </script>
+</body>
+
+</html>

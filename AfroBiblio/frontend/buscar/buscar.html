@@ -1,0 +1,112 @@
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AfroBiblio – Buscar</title>
+    <link rel="stylesheet" href="buscar.css" />
+    <link rel="icon" href="../imagens/iconepag.jpg" type="image/x-icon" />
+</head>
+
+<body>
+
+    <header>
+        <div class="logo">
+            <img src="../imagens/iconepag.jpg" alt="Ícone AfroBiblio" class="logo-icon" />
+            <h1>AfroBiblio</h1>
+        </div>
+
+        <nav>
+            <ul>
+                <li><a href="/">Início</a></li>
+                <li><a href="/titulos">Títulos</a></li>
+                <li><a href="/autores">Autores</a></li>
+                <li><a href="/adicionar" id="cadastro-link">Adicionar Título/Autor</a></li>
+                <li id="auth-area"></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <section class="principal" style="padding: 40px; display: block; text-align:center;">
+            <h2 style="margin-bottom: 20px; color: #3b1f0f;">Encontre Títulos ou Autores que esteja procurando!</h2>
+            <input id="campo-busca" type="text" placeholder="Pesquisar por título ou autor"
+                class="campo-busca" autocomplete="off" />
+        </section>
+
+        <section style="padding: 40px;">
+            <h2 style="color: #3b1f0f; margin-bottom: 15px;">Resultados</h2>
+            <div id="resultados"
+                style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px;"></div>
+            <p id="semResultados" style="margin-top: 15px; color:#3b1f0f; display:none;">Nenhum resultado encontrado.
+            </p>
+        </section>
+
+        <section style="padding: 40px;">
+            <h2 style="color: #3b1f0f; margin-bottom: 15px;">Talvez você esteja procurando...</h2>
+            <div id="sugestoes"
+                style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px;"></div>
+        </section>
+    </main>
+
+    <footer>
+        <p>Desenvolvido por Guilherme Venancio de Souza — IFSP Campinas</p>
+        <p>Licença: Creative Commons CC BY-SA 4.0</p>
+    </footer>
+
+    <script>
+        const campoBusca = document.getElementById("campo-busca");
+        const resultados = document.getElementById("resultados");
+        const sugestoes = document.getElementById("sugestoes");
+        const semResultados = document.getElementById("semResultados");
+
+        // carregar sugestões aleatórias
+        async function carregarSugestoes() {
+            const [autores, titulos] = await Promise.all([
+                fetch("/api/random/autores").then(r => r.json()),
+                fetch("/api/random/titulos").then(r => r.json())
+            ]);
+            sugestoes.innerHTML = "";
+            [...autores, ...titulos].forEach(item => {
+                const card = document.createElement("div");
+                card.classList.add("card-home");
+                card.innerHTML = `<h4>${item.nome || item.titulo}</h4><p><strong>País:</strong> ${item.pais || "—"}</p>`;
+                sugestoes.appendChild(card);
+            });
+        }
+        carregarSugestoes();
+
+        // executar busca
+        async function executarBusca() {
+            const termo = campoBusca.value.trim();
+            if (!termo) { resultados.innerHTML = ""; semResultados.style.display = "none"; return; }
+            const url = `/api/buscar?termo=${encodeURIComponent(termo)}`;
+            const resp = await fetch(url);
+            const dados = await resp.json();
+            resultados.innerHTML = "";
+            if (!dados.length) { semResultados.style.display = "block"; return; }
+            semResultados.style.display = "none";
+            dados.forEach(item => {
+                const card = document.createElement("div");
+                card.classList.add("card-home");
+                card.innerHTML = `<h4>${item.nome || item.titulo}</h4><p><strong>País:</strong> ${item.pais || "—"}</p>`;
+                resultados.appendChild(card);
+            });
+        }
+        campoBusca.addEventListener("input", executarBusca);
+
+        // login do header
+        const usuarioLogado = localStorage.getItem("usuarioLogado");
+        const authArea = document.getElementById("auth-area");
+        const cadastroLink = document.getElementById("cadastro-link");
+        if (usuarioLogado) {
+            authArea.innerHTML = `<a href="/perfil" class="perfil-link">Perfil<img src="../imagens/profile.png" alt="Perfil" class="perfil-icon"></a>`;
+        } else {
+            authArea.innerHTML = `<button id="entrar-btn" class="botao-amarelo">Entrar</button>`;
+            document.getElementById("entrar-btn").addEventListener("click", () => { window.location.href = "/login"; });
+        }
+    </script>
+
+</body>
+
+</html>

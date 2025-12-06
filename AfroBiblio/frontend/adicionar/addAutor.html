@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastrar Autor(a) | AfroBiblio</title>
+    <link rel="stylesheet" href="addAutor.css">
+    <link rel="icon" href="../imagens/iconepag.jpg" type="image/x-icon">
+</head>
+
+<body>
+
+    <header>
+        <div class="logo">
+            <img src="../imagens/iconepag.jpg" alt="Ícone AfroBiblio" class="logo-icon">
+            <h1>AfroBiblio</h1>
+        </div>
+
+        <nav>
+            <ul>
+                <li><a href="/adicionar" id="cadastro-link">Voltar</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <section class="cadastro-container">
+            <div class="cadastro-box" style="max-width: 600px;">
+
+                <h2 style="margin-bottom: 10px;">Cadastrar Novo Autor(a)</h2>
+                <p class="descricao">Preencha as informações abaixo para adicionar um(a) novo(a) autor(a) ao acervo.</p>
+
+                <form id="form-cadastro-autor">
+
+                    <div class="input-group">
+                        <label for="nome">Nome do autor(a)</label>
+                        <input type="text" id="nome" name="nome" placeholder="Nome" required>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="pais">País de origem</label>
+                        <select id="pais" name="pais" required>
+                            <option value="">Selecione o país</option>
+                        </select>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="biografia">Biografia</label>
+                        <textarea id="biografia" name="biografia" rows="4"
+                            placeholder="Escreva a história dessa pessoa..."
+                            style="width: 100%; padding: 10px; border: 2px solid #d6b65d; border-radius: 8px; background: #fff4d2;"></textarea>
+                    </div>
+
+                    <button type="submit" class="botao">Cadastrar Autor(a)</button>
+
+                </form>
+
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>Desenvolvido por Guilherme Venancio de Souza — IFSP Campinas</p>
+        <p>Licença: Creative Commons CC BY-SA 4.0</p>
+    </footer>
+
+    <script>
+
+        const usuarioLogado = JSON.parse(localStorage.getItem("usuarioLogado"));
+        if (!usuarioLogado) {
+            alert("Você precisa estar logado!");
+            window.location.href = "/login";
+        }
+
+
+        async function carregarDados() {
+            try {
+
+                // ==========================
+                // BUSCA TODOS OS DADOS
+                // ==========================
+                const [paises] = await Promise.all([
+                    fetch("/api/paises").then(r => r.json()),
+                ]);
+
+                // ==========================
+                // POPULA PAÍSES
+                // ==========================
+                const selectPais = document.getElementById("pais");
+                paises.forEach(p =>
+                    selectPais.innerHTML += `<option value="${p.id}">${p.nome}</option>`
+                );
+
+                if (paises.length === 0) {
+                    selectPais.innerHTML = `<option value="">Nenhum país cadastrado</option>`;
+                }
+
+
+            } catch (erro) {
+                console.error("Erro ao carregar opções do backend:", erro);
+                alert("Erro ao carregar países. Verifique se o servidor está rodando.");
+            }
+        }
+
+        // Executa carregamento assim que a página abre
+        carregarDados();
+
+
+        // ========================================================
+        // ENVIO DO FORMULÁRIO
+        // ========================================================
+        document.getElementById("form-cadastro-autor").addEventListener("submit", async (e) => {
+            e.preventDefault();
+
+            const dados = {
+                nome: nome.value.trim(),
+                pais_id: pais.value,
+                biografia: biografia.value.trim(),
+                usuario_id: usuarioLogado.id
+            };
+
+
+            // Validação simples antes de enviar
+            if (!dados.nome || !dados.pais_id) {
+                alert("Preencha pelo menos o nome e país.");
+                return;
+            }
+
+            try {
+                const resposta = await fetch("/adicionar/autor", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(dados)
+                });
+
+
+                const result = await resposta.json();
+
+                if (!resposta.ok) {
+                    alert(result.error || "Erro ao cadastrar autor.");
+                    return;
+                }
+
+                alert("Autor(a) cadastrado com sucesso!");
+                window.location.href = "/autores";
+
+            } catch (erro) {
+                console.error("Erro ao enviar formulário:", erro);
+                alert("Erro de conexão com o servidor.");
+            }
+        });
+
+    </script>
+
+
+</body>
+
+</html>

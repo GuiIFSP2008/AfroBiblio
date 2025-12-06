@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AfroBiblio</title>
+    <link rel="stylesheet" href="estilos.css">
+    <link rel="icon" href="imagens/iconepag.jpg" type="image/x-icon">
+</head>
+
+<body>
+    <header>
+        <div class="logo">
+            <img src="imagens/iconepag.jpg" alt="Ícone AfroBiblio" class="logo-icon">
+            <h1>AfroBiblio</h1>
+        </div>
+
+        <nav>
+            <ul>
+                <li><a href="/titulos">Títulos</a></li>
+                <li><a href="/autores">Autores</a></li>
+                <li><a href="/adicionar" id="cadastro-link">Adicionar Título/Autor</a></li>
+                <li><a href="/buscar">Buscar</a></li>
+                <li id="auth-area"></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <section class="principal">
+            <div class="principal-texto">
+                <h2><em>AfroBiblio</em>: a Biblioteca virtual Guardiã da Literatura Africana!</h2>
+                <p>
+                    A <strong>AfroBiblio</strong> é uma biblioteca digital colaborativa dedicada à
+                    valorização da literatura africana. Nosso objetivo é criar um
+                    espaço vivo onde leitores, estudantes e pesquisadores possam conhecer, cadastrar
+                    e compartilhar obras, autores e autoras que expressam as diversas vozes, culturas
+                    e tradições do continente africano e de sua diáspora.<br><br>
+
+                    Mais do que um acervo, a AfroBiblio é um movimento de preservação da memória e
+                    de fortalecimento da identidade negra por meio da palavra escrita. Aqui, cada
+                    história conta — desde os clássicos da literatura africana até as produções
+                    contemporâneas que continuam ecoando a resistência, o orgulho e a criatividade
+                    de um povo que transforma o mundo através da arte e da ancestralidade.<br><br>
+
+                    Explore, descubra e contribua com a construção dessa biblioteca comunitária que
+                    celebra o conhecimento e a diversidade da literatura africana.
+                </p>
+                <a href="/titulos" class="botao">Explorar a Biblioteca</a>
+            </div>
+        </section>
+    </main>
+
+    <section style="padding: 40px;">
+        <h2 style="color: #3b1f0f; margin-bottom: 20px;">Títulos em Destaque</h2>
+
+        <div id="random-titulos" class="grade-home">
+        </div>
+    </section>
+
+    <section style="padding: 40px;">
+        <h2 style="color: #3b1f0f; margin-bottom: 20px;">Autores em Destaque</h2>
+
+        <div id="random-autores" class="grade-home">
+        </div>
+    </section>
+
+    <footer>
+        <p>Desenvolvido por Guilherme Venancio de Souza — IFSP Campinas</p>
+        <p>Licença: Creative Commons CC BY-SA 4.0</p>
+    </footer>
+
+    <script>
+        const usuarioLogado = localStorage.getItem("usuarioLogado");
+        const authArea = document.getElementById("auth-area");
+        const cadastroLink = document.getElementById("cadastro-link");
+
+        if (usuarioLogado) {
+            authArea.innerHTML = `
+                <a href="/perfil" class="perfil-link">
+                    Perfil
+                    <img src="imagens/profile.png" alt="Perfil" class="perfil-icon">
+                </a>
+            `;
+        } else {
+            authArea.innerHTML = `
+                <button id="entrar-btn" class="botao-amarelo">Entrar</button>
+            `;
+            document.getElementById("entrar-btn").addEventListener("click", () => {
+                window.location.href = "/login";
+            });
+        }
+
+        cadastroLink.addEventListener("click", (event) => {
+            if (!usuarioLogado) {
+                event.preventDefault();
+                alert("Você precisa estar logado para cadastrar títulos ou autores.");
+                window.location.href = "/login";
+            }
+        });
+
+        async function carregarTitulosAleatorios() {
+            try {
+                const resp = await fetch("/api/random/titulos");
+                const dados = await resp.json();
+                const container = document.getElementById("random-titulos");
+                container.innerHTML = "";
+
+                dados.forEach(t => {
+                    const card = document.createElement("div");
+                    card.classList.add("card-home");
+                    card.innerHTML = `
+                        <h4>${t.titulo}</h4>
+                        <p><strong>Autor:</strong> ${t.autor || "—"}</p>
+                        <p><strong>País:</strong> ${t.pais || "—"}</p>
+                    `;
+                    container.appendChild(card);
+                });
+            } catch (err) {
+                console.error("Erro ao buscar títulos aleatórios:", err);
+            }
+        }
+
+        async function carregarAutoresAleatorios() {
+            try {
+                const resp = await fetch("/api/random/autores");
+                const dados = await resp.json();
+                const container = document.getElementById("random-autores");
+                container.innerHTML = "";
+
+                dados.forEach(a => {
+                    const card = document.createElement("div");
+                    card.classList.add("card-home");
+                    card.innerHTML = `
+                        <h4>${a.nome}</h4>
+                        <p><strong>País:</strong> ${a.pais || "—"}</p>
+                        <p><strong>Biografia:</strong> ${a.biografia ? a.biografia.substring(0, 90) + "..." : "—"}</p>
+                    `;
+                    container.appendChild(card);
+                });
+
+            } catch (err) {
+                console.error("Erro ao buscar autores aleatórios:", err);
+            }
+        }
+
+        carregarTitulosAleatorios();
+        carregarAutoresAleatorios();
+    </script>
+</body>
+
+</html>
